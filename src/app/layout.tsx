@@ -20,15 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <TanstackProvider>
-          <div>
-            <nav>
-              {/* Navbar content */}
-            </nav>
-            <main>{children}</main>
-            <footer>
-              {/* Footer content */}
-            </footer>
-          </div>
+          {children}
         </TanstackProvider>
       </body>
     </html>
