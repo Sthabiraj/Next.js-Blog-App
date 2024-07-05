@@ -15,14 +15,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <TanstackProvider>
-          {children}
-        </TanstackProvider>
-      </body>
-    </html>
+    <TanstackProvider>
+      <html lang="en">
+        <body className={inter.className}>
+          <div className="h-screen w-full">{children}</div>
+        </body>
+      </html>
+    </TanstackProvider>
   );
 }
