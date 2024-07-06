@@ -7,19 +7,35 @@ import { Label } from "../ui/label";
 import { useFormState, useFormStatus } from "react-dom";
 import { LoaderCircle } from "lucide-react";
 import { useRef } from "react";
+import { toast } from "sonner";
 
 const initialState: SignUpFormState = {
   errors: {},
   success: false,
 };
 
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" className="w-full" disabled={pending}>
+      {pending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+      Sign Up
+    </Button>
+  );
+}
+
 export default function SignUpForm() {
   const [state, formAction] = useFormState(signUp, initialState);
-  const { pending } = useFormStatus();
   const ref = useRef<HTMLFormElement>(null);
 
   if (state.success) {
     ref.current?.reset();
+    toast.success("Account created successfully");
+  }
+
+  if (state.errors.general) {
+    toast.error(state.errors.general);
   }
 
   return (
@@ -63,10 +79,10 @@ export default function SignUpForm() {
           <p className="text-red-500 text-sm">{state.errors.password}</p>
         )}
       </div>
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-        Sign Up
-      </Button>
+      {state.errors.general && (
+        <p className="text-red-500 text-sm">{state.errors.general}</p>
+      )}
+      <SubmitButton />
     </form>
   );
 }
