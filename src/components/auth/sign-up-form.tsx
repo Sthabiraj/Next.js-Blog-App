@@ -8,6 +8,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { LoaderCircle } from "lucide-react";
 import { useRef } from "react";
 import { toast } from "sonner";
+import { redirect } from "next/navigation";
 
 const initialState: SignUpFormState = {
   errors: {},
@@ -32,6 +33,7 @@ export default function SignUpForm() {
   if (state.success) {
     ref.current?.reset();
     toast.success("Account created successfully");
+    redirect("/verify-email");
   }
 
   if (state.errors.general) {
