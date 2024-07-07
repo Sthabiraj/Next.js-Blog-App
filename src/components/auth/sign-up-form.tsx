@@ -52,6 +52,7 @@ export default function SignUpForm() {
           type="text"
           placeholder="Enter your name"
           required
+          className={state.errors.name && "border-red-500"}
         />
         {state.errors.name && (
           <p className="text-red-500 text-sm">{state.errors.name}</p>
@@ -65,6 +66,7 @@ export default function SignUpForm() {
           type="email"
           placeholder="Enter your email"
           required
+          className={state.errors.email && "border-red-500"}
         />
         {state.errors.email && (
           <p className="text-red-500 text-sm">{state.errors.email}</p>
@@ -78,6 +80,7 @@ export default function SignUpForm() {
           type="password"
           placeholder="Enter your password"
           required
+          className={state.errors.password && "border-red-500"}
         />
         {state.errors.password && (
           <p className="text-red-500 text-sm">{state.errors.password}</p>

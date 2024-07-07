@@ -9,7 +9,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Sign Up",
+  description: "Sign up for your new account to unlock exclusive benefits.",
+};
 
 export default function SignUp() {
   return (
