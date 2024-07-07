@@ -6,9 +6,9 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { useFormState, useFormStatus } from "react-dom";
 import { LoaderCircle } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const initialState: SignUpFormState = {
   errors: {},
@@ -29,16 +29,18 @@ function SubmitButton() {
 export default function SignUpForm() {
   const [state, formAction] = useFormState(signUp, initialState);
   const ref = useRef<HTMLFormElement>(null);
+  const router = useRouter();
 
-  if (state.success) {
-    ref.current?.reset();
-    toast.success("Account created successfully");
-    redirect("/verify-email");
-  }
-
-  if (state.errors.general) {
-    toast.error(state.errors.general);
-  }
+  useEffect(() => {
+    if (state.success) {
+      ref.current?.reset();
+      toast.success("Account created successfully");
+      router.push("/verify-email");
+    }
+    if (state.errors.general) {
+      toast.error(state.errors.general);
+    }
+  }, [state, router]);
 
   return (
     <form ref={ref} action={formAction} className="space-y-4">
@@ -81,9 +83,6 @@ export default function SignUpForm() {
           <p className="text-red-500 text-sm">{state.errors.password}</p>
         )}
       </div>
-      {state.errors.general && (
-        <p className="text-red-500 text-sm">{state.errors.general}</p>
-      )}
       <SubmitButton />
     </form>
   );
