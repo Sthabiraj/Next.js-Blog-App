@@ -1,5 +1,6 @@
 import VerifyEmailClient from "@/components/auth/verify-email-client";
 import { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Verify Email",
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default async function VerifyEmailPage() {
-  return <VerifyEmailClient />;
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailClient />
+    </Suspense>
+  );
 }
