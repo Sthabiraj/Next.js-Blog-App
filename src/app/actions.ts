@@ -3,6 +3,7 @@
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import prisma from "@/lib/prisma";
+import axios, { AxiosError } from "axios";
 
 // Define the schema for signup validation
 const SignupSchema = z.object({
@@ -68,9 +69,19 @@ export async function signUp(
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create new user
-    await prisma.user.create({
+    const newUser = await prisma.user.create({
       data: { name, email, password: hashedPassword },
     });
+
+    // Send verification email
+    const emailResult = await resendVerificationEmail(email);
+    if (!emailResult.success) {
+      // Consider deleting the user if email verification fails
+      await prisma.user.delete({ where: { id: newUser.id } });
+      return createErrorResponse({
+        general: [emailResult.error || "Failed to send verification email"],
+      });
+    }
 
     return createSuccessResponse();
   } catch (error) {
@@ -78,5 +89,53 @@ export async function signUp(
     return createErrorResponse({
       general: ["An error occurred. Please try again later."],
     });
+  }
+}
+
+export interface VerificationEmail {
+  error?: string;
+  success: boolean;
+}
+
+export async function resendVerificationEmail(
+  email: string
+): Promise<VerificationEmail> {
+  try {
+    // base url
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    if (!baseUrl) {
+      throw new Error("NEXT_PUBLIC_BASE_URL is not defined");
+    }
+
+    const response = await axios.post<{ success: true }>(
+      `${baseUrl}/api/send-verification-email`,
+      { email },
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    console.log("Email API Response:", response.data);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Email sending error:", error);
+
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      return {
+        success: false,
+        error:
+          axiosError.response?.data.message ||
+          axiosError.message ||
+          "Failed to resend verification email",
+      };
+    } else {
+      return {
+        success: false,
+        error:
+          "An unexpected error occurred while sending the verification email",
+      };
+    }
   }
 }

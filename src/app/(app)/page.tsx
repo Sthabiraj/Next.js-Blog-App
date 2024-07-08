@@ -1,15 +1,5 @@
-import Blogs from "@/components/blogs";
-
-
 const HomePage = () => {
-
-
-  return (
-    <div>
-      <h1>Blog Posts</h1>
-      <Blogs />
-    </div>
-  );
+  return <div>Home</div>;
 };
 
 export default HomePage;
