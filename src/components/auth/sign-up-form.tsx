@@ -45,7 +45,9 @@ export default function SignUpForm() {
     if (state.success) {
       ref.current?.reset();
       toast.success("Account created successfully");
-      router.push("/verify-email");
+      router.push(
+        `/verify-email?email=${encodeURIComponent(state.values?.email || "")}`
+      );
     }
     if (state.errors.general) {
       toast.error(state.errors.general);

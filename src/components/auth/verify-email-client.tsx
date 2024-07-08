@@ -48,7 +48,28 @@ export default function VerifyEmailClient() {
   const [verificationStatus, setVerificationStatus] =
     useState<VerificationStatusType>(VerificationStatus.PENDING);
   const [isResending, setIsResending] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
+  const [cooldownTime, setCooldownTime] = useState(0);
+
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    setIsClient(true);
+    // Retrieve stored verification status
+    const storedStatus = sessionStorage.getItem("verificationStatus");
+    if (storedStatus) {
+      setVerificationStatus(storedStatus as VerificationStatusType);
+    }
+  }, []);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (cooldownTime > 0) {
+      timer = setTimeout(() => setCooldownTime((time) => time - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [cooldownTime]);
 
   const verifyEmail = useCallback(async (token: string) => {
     try {
@@ -57,33 +78,60 @@ export default function VerifyEmailClient() {
 
       if (data.success) {
         setVerificationStatus(VerificationStatus.SUCCESS);
+        if (data.email) setUserEmail(data.email);
+        // Store the successful verification status
+        sessionStorage.setItem(
+          "verificationStatus",
+          VerificationStatus.SUCCESS
+        );
       } else {
         throw new Error(data.error);
       }
     } catch (error) {
       console.error("Verification error:", error);
       setVerificationStatus(VerificationStatus.ERROR);
+      // Store the error status
+      sessionStorage.setItem("verificationStatus", VerificationStatus.ERROR);
     }
   }, []);
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    if (token) {
-      verifyEmail(token);
-    } else {
-      setVerificationStatus(VerificationStatus.AWAITING);
+    if (isClient) {
+      const token = searchParams.get("token");
+      const storedStatus = sessionStorage.getItem("verificationStatus");
+
+      if (token && !storedStatus) {
+        verifyEmail(token);
+      } else if (storedStatus) {
+        setVerificationStatus(storedStatus as VerificationStatusType);
+      } else {
+        setVerificationStatus(VerificationStatus.AWAITING);
+        const email = searchParams.get("email");
+        if (email) setUserEmail(email);
+      }
     }
-  }, [searchParams, verifyEmail]);
+  }, [searchParams, verifyEmail, isClient]);
 
   const handleResendEmail = async () => {
+    if (cooldownTime > 0) return;
+
     setIsResending(true);
     try {
-      const email = localStorage.getItem("userEmail");
-      if (!email) throw new Error("Email not found");
+      if (!userEmail) {
+        toast.error("Email address not available. Please contact support.");
+        return;
+      }
 
-      const result = await resendVerificationEmail(email);
+      const result = await resendVerificationEmail(userEmail);
       if (result.success) {
         toast.success("Verification email resent. Please check your inbox.");
+        setCooldownTime(60);
+        // Reset the verification status to awaiting
+        setVerificationStatus(VerificationStatus.AWAITING);
+        sessionStorage.setItem(
+          "verificationStatus",
+          VerificationStatus.AWAITING
+        );
       } else {
         throw new Error(result.error || "Failed to resend email");
       }
@@ -94,6 +142,10 @@ export default function VerifyEmailClient() {
       setIsResending(false);
     }
   };
+
+  if (!isClient) {
+    return null; // or a loading spinner
+  }
 
   const { icon, title, message } = StatusContent[verificationStatus];
 
@@ -112,7 +164,7 @@ export default function VerifyEmailClient() {
             verificationStatus === VerificationStatus.AWAITING) && (
             <Button
               onClick={handleResendEmail}
-              disabled={isResending}
+              disabled={isResending || cooldownTime > 0}
               className="w-full bg-blue-500 hover:bg-blue-600 text-white"
             >
               {isResending ? (
@@ -120,6 +172,8 @@ export default function VerifyEmailClient() {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Resending...
                 </>
+              ) : cooldownTime > 0 ? (
+                `Resend in ${cooldownTime}s`
               ) : (
                 <>
                   <Mail className="mr-2 h-4 w-4" />
