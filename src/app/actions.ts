@@ -21,6 +21,11 @@ export type SignUpFormState = {
     general?: string[];
   };
   success: boolean;
+  values?: {
+    name: string;
+    email: string;
+    password: string;
+  };
 };
 
 // Helper function to create a consistent error response
@@ -32,9 +37,14 @@ const createErrorResponse = (
 });
 
 // Helper function to create a success response
-const createSuccessResponse = (): SignUpFormState => ({
+const createSuccessResponse = (values: {
+  name: string;
+  email: string;
+  password: string;
+}): SignUpFormState => ({
   errors: {},
   success: true,
+  values: values,
 });
 
 // Main signup function
@@ -83,7 +93,7 @@ export async function signUp(
       });
     }
 
-    return createSuccessResponse();
+    return createSuccessResponse({ name, email, password });
   } catch (error) {
     console.error("Signup error:", error);
     return createErrorResponse({
