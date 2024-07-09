@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Loader2, CheckCircle, XCircle, Mail } from "lucide-react";
@@ -53,6 +53,8 @@ export default function VerifyEmailClient() {
   const [cooldownTime, setCooldownTime] = useState(0);
 
   const searchParams = useSearchParams();
+
+  const router = useRouter();
 
   useEffect(() => {
     setIsClient(true);
@@ -184,10 +186,10 @@ export default function VerifyEmailClient() {
           )}
           {verificationStatus === VerificationStatus.SUCCESS && (
             <Button
-              onClick={() => (window.location.href = "/dashboard")}
+              onClick={() => router.push("/upload-picture")}
               className="w-full bg-green-500 hover:bg-green-600 text-white"
             >
-              Go to Dashboard
+              Go to Next Step
             </Button>
           )}
         </CardFooter>
