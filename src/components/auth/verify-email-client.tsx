@@ -109,7 +109,10 @@ export default function VerifyEmailClient() {
       } else {
         setVerificationStatus(VerificationStatus.AWAITING);
         const email = searchParams.get("email");
-        if (email) setUserEmail(email);
+        if (email) {
+          setUserEmail(email);
+          localStorage.setItem("email", email);
+        }
       }
     }
   }, [searchParams, verifyEmail, isClient]);
