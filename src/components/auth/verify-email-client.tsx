@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Loader2, CheckCircle, XCircle, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { resendVerificationEmail } from "@/app/actions";
+import { resendVerificationEmail } from "@/lib/actions";
 
 const VerificationStatus = {
   PENDING: "pending",
