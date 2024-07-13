@@ -1,6 +1,6 @@
 "use client";
 
-import { signUp, SignUpFormState } from "@/app/actions";
+import { signUp, SignUpFormState } from "@/lib/actions";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";

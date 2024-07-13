@@ -4,6 +4,8 @@ import { z } from "zod";
 import bcrypt from "bcrypt";
 import prisma from "@/lib/prisma";
 import axios, { AxiosError } from "axios";
+import { signIn } from "@/auth";
+import { AuthError } from "next-auth";
 
 // Define the schema for signup validation
 const SignupSchema = z.object({
@@ -148,4 +150,28 @@ export async function resendVerificationEmail(
       };
     }
   }
+}
+
+export async function authenticate(
+  prevState: { message: string | null },
+  formData: FormData
+) {
+  try {
+    await signIn("credentials", Object.fromEntries(formData));
+    return { message: null };
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case "CredentialsSignin":
+          return { message: "Invalid credentials." };
+        default:
+          return { message: "Something went wrong." };
+      }
+    }
+    throw error;
+  }
+}
+
+export async function signInWithGitHub() {
+  await signIn("github");
 }
