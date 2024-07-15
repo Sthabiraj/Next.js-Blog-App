@@ -4,21 +4,53 @@ import { useEffect } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Mail, Lock, Github } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 import { authenticate, signInWithGitHub } from "@/lib/actions";
 import { toast } from "sonner";
-import { useFormState } from "react-dom";
-import { signIn } from "@/auth";
+import { useFormState, useFormStatus } from "react-dom";
+
+// Define the shape of our form state
+type FormState = {
+  message: string | null;
+  errors?: {
+    email?: string[];
+    password?: string[];
+  };
+};
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+      disabled={pending}
+    >
+      {pending ? "Signing In..." : "Sign In"}
+    </Button>
+  );
+}
 
 export default function LoginForm() {
-  const initialState = { message: null };
-  const [state, formAction] = useFormState(authenticate, initialState);
+  // Define the initial state with the correct shape
+  const initialState: FormState = { message: null };
+
+  // Use a type assertion to match the expected function signature
+  const [state, formAction] = useFormState(authenticate as any, initialState);
 
   useEffect(() => {
     if (state.message) {
       toast.error(state.message);
     }
-  }, [state.message]);
+    if (state.errors) {
+      Object.entries(state.errors).forEach(([field, errors]) => {
+        if (Array.isArray(errors)) {
+          errors.forEach((error) => toast.error(`${field}: ${error}`));
+        }
+      });
+    }
+  }, [state]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -64,12 +96,7 @@ export default function LoginForm() {
             />
           </div>
         </div>
-        <Button
-          type="submit"
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-        >
-          Sign In
-        </Button>
+        <SubmitButton />
       </form>
 
       <div className="relative">

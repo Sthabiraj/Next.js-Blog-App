@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 import axios, { AxiosError } from "axios";
 import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
 
 // Define the schema for signup validation
 const SignupSchema = z.object({
@@ -152,26 +153,77 @@ export async function resendVerificationEmail(
   }
 }
 
+// Define a schema for input validation
+const credentialsSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+// Define the shape of the form state
+type FormState = {
+  message: string | null;
+  errors?: {
+    email?: string[];
+    password?: string[];
+  };
+};
+
 export async function authenticate(
-  prevState: { message: string | null },
+  prevState: FormState,
   formData: FormData
-) {
+): Promise<FormState> {
+  // Validate and sanitize the input
+  const validatedFields = credentialsSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+
+  // If form validation fails, return error messages
+  if (!validatedFields.success) {
+    return {
+      message: "Invalid input. Please check your email and password.",
+      errors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
+
   try {
-    await signIn("credentials", Object.fromEntries(formData));
-    return { message: null };
+    const result = await signIn("credentials", {
+      ...validatedFields.data,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      return { message: "Invalid credentials." };
+    }
+
+    // Redirect to home on success
+    redirect("/");
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
         case "CredentialsSignin":
           return { message: "Invalid credentials." };
+        case "CallbackRouteError":
+          return {
+            message:
+              "There was a problem with the sign-in link. Please try again.",
+          };
         default:
-          return { message: "Something went wrong." };
+          return { message: "An unexpected error occurred. Please try again." };
       }
     }
-    throw error;
+    // Log unexpected errors
+    console.error("Authentication error:", error);
+    return { message: "An unexpected error occurred. Please try again." };
   }
 }
 
-export async function signInWithGitHub() {
-  await signIn("github");
+export async function signInWithGitHub(): Promise<FormState> {
+  try {
+    await signIn("github", { callbackUrl: "/" });
+    return { message: null }; // This line will likely never be reached due to the redirect
+  } catch (error) {
+    console.error("GitHub sign-in error:", error);
+    return { message: "Failed to sign in with GitHub. Please try again." };
+  }
 }

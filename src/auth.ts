@@ -34,16 +34,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const user = await getUser(email);
           if (!user) return null;
           const passwordsMatch = user.password
-            ? bcrypt.compare(password, user.password)
+            ? await bcrypt.compare(password, user.password)
             : false;
 
           if (passwordsMatch) return user;
         }
 
-        console.log("Invalid credentials");
-        return null;
+        // Instead of console.log, we'll throw an error
+        throw new Error("InvalidCredentials");
       },
     }),
     GitHub,
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+  },
+  pages: {
+    signIn: "/login", // custom login page path
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
+  },
 });
