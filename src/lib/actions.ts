@@ -153,25 +153,30 @@ export async function resendVerificationEmail(
 }
 
 export async function authenticate(
-  prevState: { message: string | null },
+  prevState: string | undefined,
   formData: FormData
 ) {
   try {
-    await signIn("credentials", Object.fromEntries(formData));
-    return { message: null };
+    await signIn("credentials", formData);
   } catch (error) {
     if (error instanceof AuthError) {
+      console.log("AuthError:", error);
       switch (error.type) {
         case "CredentialsSignin":
-          return { message: "Invalid credentials." };
+          return "Invalid credentials.";
         default:
-          return { message: "Something went wrong." };
+          return "Something went wrong.";
       }
     }
     throw error;
   }
 }
 
-export async function signInWithGitHub() {
-  await signIn("github");
+export async function signInWithGitHub(prevState: string | undefined) {
+  try {
+    await signIn("github");
+  } catch (error) {
+    console.error("GitHub Signin Error:", error);
+    return "Failed to sign in with GitHub";
+  }
 }
